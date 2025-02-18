@@ -363,3 +363,9 @@ MigrationBackup/
 FodyWeavers.xsd
 
 RobotBokning/appsettings.Development.json
+
+# Docker
+.env
+*.env
+.env.*
+docker-compose.override.yml

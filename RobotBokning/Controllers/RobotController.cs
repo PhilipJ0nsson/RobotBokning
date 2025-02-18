@@ -10,11 +10,13 @@ using System.Security.Claims;
 
 namespace RobotBokning.Controllers
 {
+    // Controller for managing robots and their availability
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class RobotController : ControllerBase
     {
+        // Dependencies for robot management
         private readonly IRobotRepository _robotRepository;
         private readonly IBookingRepository _bookingRepository;
         private readonly IMapper _mapper;
@@ -32,12 +34,13 @@ namespace RobotBokning.Controllers
             _logger = logger;
         }
 
+        // Get all robots with availability info
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RobotDto>>> GetRobots()
         {
             var robots = await _robotRepository.GetRobotsAsync();
             if (!robots.Any())
-                return NotFound("No robots found in system");
+                return NotFound("Inga robotar hittades i systemet");
 
             var robotDtos = _mapper.Map<List<RobotDto>>(robots);
             foreach (var robotDto in robotDtos)
@@ -48,14 +51,15 @@ namespace RobotBokning.Controllers
             return Ok(robotDtos);
         }
 
+        // Get calendar data for robot bookings
         [HttpGet("calendar")]
         public async Task<ActionResult<CalendarResponseDto>> GetCalendarData(
             [FromQuery] DateTime start,
             [FromQuery] DateTime end)
         {
-            var robot = await _robotRepository.GetRobotByIdAsync(1); // Adjust for specific robot
+            var robot = await _robotRepository.GetRobotByIdAsync(1);
             if (robot == null)
-                return NotFound("Robot not found");
+                return NotFound("Roboten hittades inte");
 
             var bookings = await _bookingRepository.GetBookingsForPeriodAsync(start, end);
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -82,6 +86,7 @@ namespace RobotBokning.Controllers
             };
         }
 
+        // Create new robot (admin only)
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<RobotDto>> CreateRobot(CreateRobotDto dto)
@@ -95,15 +100,16 @@ namespace RobotBokning.Controllers
             var robotDto = _mapper.Map<RobotDto>(createdRobot);
             robotDto.NextAvailableTime = await _robotRepository.GetNextAvailableTimeAsync();
 
-            return CreatedAtAction(nameof(GetRobotByIdAsync), new { id = createdRobot.Id }, robotDto);
+            return CreatedAtAction(nameof(GetRobotById), new { id = createdRobot.Id }, robotDto);
         }
 
+        // Get specific robot details
         [HttpGet("{id}")]
-        public async Task<ActionResult<RobotDto>> GetRobotByIdAsync(int id)
+        public async Task<ActionResult<RobotDto>> GetRobotById(int id)
         {
             var robot = await _robotRepository.GetRobotByIdAsync(id);
             if (robot == null)
-                return NotFound("Robot not found");
+                return NotFound("Roboten hittades inte");
 
             var robotDto = _mapper.Map<RobotDto>(robot);
             robotDto.NextAvailableTime = await _robotRepository.GetNextAvailableTimeAsync();
@@ -111,13 +117,14 @@ namespace RobotBokning.Controllers
             return Ok(robotDto);
         }
 
+        // Update robot details (admin only)
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<ActionResult<RobotDto>> UpdateRobot(int id, UpdateRobotDto updateDto)
         {
             var robot = await _robotRepository.GetRobotByIdAsync(id);
             if (robot == null)
-                return NotFound("Robot not found");
+                return NotFound("Roboten hittades inte");
 
             _mapper.Map(updateDto, robot);
 
@@ -130,22 +137,22 @@ namespace RobotBokning.Controllers
             return Ok(robotDto);
         }
 
+        // Delete robot (admin only)
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRobot(int id)
         {
             var robot = await _robotRepository.GetRobotByIdAsync(id);
             if (robot == null)
-                return NotFound("Robot not found");
+                return NotFound("Roboten hittades inte");
 
             if (await _robotRepository.HasActiveBookings(id))
-                return BadRequest("Cannot delete robot with active bookings");
+                return BadRequest("Kan inte ta bort robot med aktiva bokningar");
 
             await _robotRepository.DeleteRobotAsync(id);
             _logger.LogInformation($"Admin deleted robot: {robot.Name}");
 
             return NoContent();
         }
-
     }
 }

@@ -1,14 +1,16 @@
 import { Navigate } from 'react-router-dom';
 
+// Component to protect routes that require authentication
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  // Check for authentication token
   const token = localStorage.getItem('token');
-  
+ 
+  // If no token found, redirect to login page
   if (!token) {
-    // Om ingen token finns, omdirigera till login
     return <Navigate to="/login" replace />;
   }
-  
-  // Om token finns, visa den skyddade komponenten
+ 
+  // If token exists, show the protected content
   return <>{children}</>;
 };
 

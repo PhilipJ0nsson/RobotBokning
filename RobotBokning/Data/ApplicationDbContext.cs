@@ -23,7 +23,8 @@ namespace RobotBokning.Data
             modelBuilder.Entity<Booking>()
                 .HasOne(b => b.User)
                 .WithMany(u => u.Bookings)
-                .HasForeignKey(b => b.UserId);
+                .HasForeignKey(b => b.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Booking>()
                 .HasOne(b => b.Robot)

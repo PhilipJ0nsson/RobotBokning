@@ -4,6 +4,7 @@
     {
         Scheduled,
         InProgress,
-        Cancelled
+        Cancelled,
+        CurrentHolder
     }
 }

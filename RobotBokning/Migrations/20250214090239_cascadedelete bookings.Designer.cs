@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RobotBokning.Data;
 
@@ -11,9 +12,11 @@ using RobotBokning.Data;
 namespace RobotBokning.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250214090239_cascadedelete bookings")]
+    partial class cascadedeletebookings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -389,8 +392,7 @@ namespace RobotBokning.Migrations
 
                     b.HasOne("RobotBokning.Models.ApplicationUser", "User")
                         .WithMany("Bookings")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("UserId");
 
                     b.Navigation("Robot");
 

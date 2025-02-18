@@ -10,9 +10,9 @@ namespace RobotBokning.Repositories
         Task<List<Booking>> GetUserBookingsAsync(string userId);
         Task<List<Booking>> GetAllBookingsAsync();
         Task<List<Booking>> GetBookingsForPeriodAsync(DateTime start, DateTime end);
-        Task<Booking> GetLatestBookingForRobotAsync(int robotId, DateTime date);
+        Task<Booking> GetLatestBookingForRobotAsync(int robotId);
         Task<Booking> GetNextBookingForRobotAsync(int robotId, DateTime currentDate);
-        Task<bool> IsTimeSlotAvailableAsync(DateTime start, DateTime end);
+        Task<bool> IsTimeSlotAvailableAsync(int robotId, DateTime start, DateTime end);
         Task<Booking> CreateAsync(Booking booking);
         Task<Booking> UpdateAsync(Booking booking);
         Task DeleteAsync(Booking booking);
@@ -58,16 +58,52 @@ namespace RobotBokning.Repositories
                 .OrderByDescending(b => b.StartTime)
                 .ToListAsync();
         }
-        public async Task<Booking> GetLatestBookingForRobotAsync(int robotId, DateTime date)
+        public async Task<Booking> GetLatestBookingForRobotAsync(int robotId)
         {
             return await _context.Bookings
                 .Include(b => b.User)
                 .Where(b => b.RobotId == robotId &&
-                           (b.StartTime <= date && b.EndTime >= date) || // Pågående bokning
-                           b.EndTime < date)                             // Tidigare bokningar
+                           b.Status != BookingStatus.Cancelled)
                 .OrderByDescending(b => b.EndTime)
                 .FirstOrDefaultAsync();
         }
+        //public async Task<Booking> GetLatestBookingForRobotAsync(int robotId, DateTime date)
+        //{
+        //    // First, try to find an active booking for the current date
+        //    var activeBooking = await _context.Bookings
+        //        .Include(b => b.User)
+        //        .Where(b => b.RobotId == robotId &&
+        //                   b.StartTime <= date &&
+        //                   b.EndTime >= date)
+        //        .OrderByDescending(b => b.EndTime)
+        //        .FirstOrDefaultAsync();
+
+        //    if (activeBooking != null)
+        //    {
+        //        return activeBooking;
+        //    }
+
+        //    // If no active booking exists, find the most recent completed booking
+        //    var lastCompletedBooking = await _context.Bookings
+        //        .Include(b => b.User)
+        //        .Where(b => b.RobotId == robotId &&
+        //                   b.EndTime < date &&
+        //                   b.Status != BookingStatus.Cancelled)  // Exclude cancelled bookings
+        //        .OrderByDescending(b => b.EndTime)
+        //        .FirstOrDefaultAsync();
+
+        //    if (lastCompletedBooking != null)
+        //    {
+        //        return lastCompletedBooking;
+        //    }
+
+        //    // If no active or completed bookings exist, find the most recent manual holder change
+        //    return await _context.Bookings
+        //        .Include(b => b.User)
+        //        .Where(b => b.RobotId == robotId)
+        //        .OrderByDescending(b => b.EndTime)
+        //        .FirstOrDefaultAsync();
+        //}
         public async Task<Booking> GetNextBookingForRobotAsync(int robotId, DateTime currentDate)
         {
             // Hämta alla bokningar för roboten som är framtida
@@ -80,13 +116,13 @@ namespace RobotBokning.Repositories
             // Returnera den första bokningen som är planerad efter currentDate
             return bookings.FirstOrDefault();
         }
-        public async Task<bool> IsTimeSlotAvailableAsync(DateTime startTime, DateTime endTime)
+        public async Task<bool> IsTimeSlotAvailableAsync(int robotId, DateTime startTime, DateTime endTime)
         {
             var existingBooking = await _context.Bookings
-                .Where(b => b.Status != BookingStatus.Cancelled)
+                .Where(b => b.RobotId == robotId && b.Status != BookingStatus.Cancelled) // Lägg till RobotId check
                 .AnyAsync(b =>
-                    (b.StartTime <= endTime && b.EndTime >= startTime) || // Överlappar med befintlig bokning
-                    (b.StartTime.Date >= startTime.Date && b.StartTime.Date <= endTime.Date) // Inom datumintervallet
+                    (b.StartTime <= endTime && b.EndTime >= startTime) ||
+                    (b.StartTime.Date >= startTime.Date && b.StartTime.Date <= endTime.Date)
                 );
             return !existingBooking;
         }

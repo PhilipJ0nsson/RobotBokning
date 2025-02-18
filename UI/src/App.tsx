@@ -1,81 +1,93 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';  // Lägg till denna import
+import { AuthProvider } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import CalendarView from './pages/CalendarViewPage';
 import RobotView from './pages/RobotViewPage';
 import RobotDetail from './pages/RobotDetailPage';
-import AddDocument from './pages/AddDocumentPage'; 
+import AddDocument from './pages/AddDocumentPage';
 import AccountPage from './pages/AccountPage';
 import RegisterPage from './pages/RegisterPage'
 import BookingsPage from './pages/BookingPage'
 import ProtectedRoute from './components/ProtectedRoute';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import UserBookingPage from './pages/UserBookingsPage';
 
+// Main application component with routing configuration
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Publik route */}
+          {/* Public routes - accessible without login */}
           <Route path="/login" element={<LoginPage />} />
-          
-          {/* Skyddade routes för vanliga användare */}
-          <Route 
-            path="/calendar" 
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+         
+          {/* Protected routes - require authentication */}
+          <Route
+            path="/calendar"
             element={
               <ProtectedRoute>
                 <CalendarView />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/robots" 
+          <Route
+            path="/robots"
             element={
               <ProtectedRoute>
                 <RobotView />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/robots/:id" 
+          <Route
+            path="/robots/:id"
             element={
               <ProtectedRoute>
                 <RobotDetail />
               </ProtectedRoute>
-            } 
+            }
           />
-                  <Route 
-          path="/robots/:id/add-document" 
-          element={
-            <ProtectedRoute>
-              <AddDocument />
-            </ProtectedRoute>
-          } 
-        />
-              <Route 
-          path="/account" 
-          element={
-            <ProtectedRoute>
-              <AccountPage />
-            </ProtectedRoute>
-          } 
-        />
-                  <Route 
-            path="/register" 
+          <Route
+            path="/robots/:id/add-document"
+            element={
+              <ProtectedRoute>
+                <AddDocument />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <AccountPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/register"
             element={
               <ProtectedRoute>
                 <RegisterPage />
               </ProtectedRoute>
-            } 
+            }
           />
-                    <Route 
-            path="/bookings" 
+          <Route
+            path="/bookings"
             element={
               <ProtectedRoute>
                 <BookingsPage />
               </ProtectedRoute>
-            } 
+            }
           />
-          {/* Omdirigera root till calendar */}
+          <Route
+            path="/my-bookings"
+            element={
+              <ProtectedRoute>
+                <UserBookingPage />
+              </ProtectedRoute>
+            }
+          />
+          {/* Redirect root to calendar page */}
           <Route path="/" element={<Navigate to="/calendar" replace />} />
         </Routes>
       </BrowserRouter>

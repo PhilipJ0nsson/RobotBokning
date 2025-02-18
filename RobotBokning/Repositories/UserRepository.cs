@@ -18,6 +18,8 @@ namespace RobotBokning.Repositories
         Task<IList<string>> GetUserRoles(ApplicationUser user);
         Task<string> GeneratePasswordResetTokenAsync(ApplicationUser user);
         Task<bool> ResetPasswordAsync(ApplicationUser user, string token, string newPassword);
+        Task<bool> ChangePasswordAsync(ApplicationUser user, string currentPassword, string newPassword);
+        Task<bool> ValidatePasswordAsync(ApplicationUser user, string password);
     }
 
     // UserRepository.cs
@@ -100,6 +102,17 @@ namespace RobotBokning.Repositories
         {
             var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
             return result.Succeeded;
+        }
+        public async Task<bool> ChangePasswordAsync(ApplicationUser user, string currentPassword, string newPassword)
+        {
+            var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+            return result.Succeeded;
+        }
+        public async Task<bool> ValidatePasswordAsync(ApplicationUser user, string password)
+        {
+            var passwordHasher = new PasswordHasher<ApplicationUser>();
+            var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+            return result == PasswordVerificationResult.Success;
         }
     }
 }

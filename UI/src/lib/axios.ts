@@ -1,15 +1,17 @@
 import axios from 'axios';
 
-// Lägg till denna export-konstant
+// Base URL for API requests
 const API_URL = 'https://localhost:7285';
 
+// Create axios instance with default settings
 const instance = axios.create({
-    baseURL: API_URL,  // Använd API_URL konstanten här
+    baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json'
     }
 });
 
+// Add authentication token to each request
 instance.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -18,6 +20,6 @@ instance.interceptors.request.use((config) => {
     return config;
 });
 
-// Exportera både instansen och API_URL
+// Export for use in other files
 export { API_URL };
 export default instance;

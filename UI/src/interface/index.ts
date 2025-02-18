@@ -47,7 +47,7 @@ export interface Document {
     lastName: string;
     phone: string;
     company: string;
-    token: string;
+    token?: string;
     isAdmin: boolean;
     bookings?: Booking[];
   }

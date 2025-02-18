@@ -15,11 +15,13 @@ using System.Text;
 
 namespace RobotBokning.Controllers
 {
+    // Account management controller handling user authentication and profile operations
     [ApiController]
     [Route("api/account")]
-    [EnableCors] // Lägg till denna rad
+    [EnableCors]
     public class AccountController : ControllerBase
     {
+        // Dependency injection for required services
         private readonly IUserRepository _userRepository;
         private readonly IConfiguration _configuration;
         private readonly IMapper _mapper;
@@ -37,6 +39,7 @@ namespace RobotBokning.Controllers
             _emailSender = emailSender;
         }
 
+        // Register new user with optional admin role
         [HttpPost("register")]
         public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
         {
@@ -50,28 +53,40 @@ namespace RobotBokning.Controllers
 
             user = await _userRepository.CreateAsync(user, registerDto.Password);
 
+            // Add admin role if specified
+            if (registerDto.IsAdmin)
+            {
+                var roleResult = await _userRepository.AddToRoleAsync(user, "Admin");
+                if (!roleResult)
+                    return BadRequest("Failed to add admin role");
+            }
+
+            var roles = await _userRepository.GetUserRoles(user);
+            var userDto = _mapper.Map<UserDto>(user);
+            userDto.IsAdmin = roles.Contains("Admin");
+            userDto.Token = await GenerateJwtToken(user);
+
+            return userDto;
+        }
+
+        // User login endpoint
+        [HttpPost("login")]
+        public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
+        {
+            var user = await _userRepository.GetByEmailAsync(loginDto.Email);
+            if (user == null)
+                return Unauthorized("Ogiltig email.");
+
+            if (!await _userRepository.CheckPasswordAsync(user, loginDto.Password))
+                return Unauthorized("Ogiltigt lösenord.");
+
             var userDto = _mapper.Map<UserDto>(user);
             userDto.Token = await GenerateJwtToken(user);
 
             return userDto;
         }
 
-        [HttpPost("login")]
-        public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
-        {
-            var user = await _userRepository.GetByEmailAsync(loginDto.Email);
-            if (user == null)
-                return Unauthorized("Invalid email");
-
-            if (!await _userRepository.CheckPasswordAsync(user, loginDto.Password))
-                return Unauthorized("Invalid password");
-
-            var userDto = _mapper.Map<UserDto>(user);
-            userDto.Token = await GenerateJwtToken(user);  // Nu async
-
-            return userDto;
-        }
-
+        // Get current user info
         [Authorize]
         [HttpGet("current")]
         public async Task<ActionResult<UserDto>> GetCurrentUser()
@@ -83,14 +98,14 @@ namespace RobotBokning.Controllers
                 return NotFound();
 
             var roles = await _userRepository.GetUserRoles(user);
-
             var userDto = _mapper.Map<UserDto>(user);
             userDto.Token = await GenerateJwtToken(user);
-            userDto.IsAdmin = roles.Contains("Admin");  // Sätt IsAdmin baserat på roller
+            userDto.IsAdmin = roles.Contains("Admin");
 
             return userDto;
         }
 
+        // Generate JWT token with user claims
         private async Task<string> GenerateJwtToken(ApplicationUser user)
         {
             if (user == null)
@@ -100,18 +115,17 @@ namespace RobotBokning.Controllers
             if (string.IsNullOrEmpty(jwtSettings))
                 throw new InvalidOperationException("JWT:SecretKey is not configured");
 
-            // Hämta användarens roller
             var roles = await _userRepository.GetUserRoles(user);
 
+            // Create claims for token
             var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.NameIdentifier, user.Id),
-        new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
-        new Claim(ClaimTypes.GivenName, user.FirstName ?? string.Empty),
-        new Claim(ClaimTypes.Surname, user.LastName ?? string.Empty)
-    };
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                new Claim(ClaimTypes.GivenName, user.FirstName ?? string.Empty),
+                new Claim(ClaimTypes.Surname, user.LastName ?? string.Empty)
+            };
 
-            // Lägg till roller i claims
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
@@ -132,6 +146,8 @@ namespace RobotBokning.Controllers
 
             return tokenHandler.WriteToken(token);
         }
+
+        // Update user profile information
         [Authorize]
         [HttpPut("update")]
         public async Task<ActionResult<UserDto>> UpdateUser(UpdateUserDto updateDto)
@@ -142,12 +158,10 @@ namespace RobotBokning.Controllers
             if (user == null)
                 return NotFound();
 
-            // Uppdatera användaruppgifter
             user.FirstName = updateDto.FirstName;
             user.LastName = updateDto.LastName;
             user.Company = updateDto.Company;
             user.Phone = updateDto.Phone;
-            // Email uppdateras inte eftersom det används som användarnamn
 
             var result = await _userRepository.UpdateUserAsync(user);
             if (!result)
@@ -159,6 +173,7 @@ namespace RobotBokning.Controllers
             return userDto;
         }
 
+        // Delete user account
         [Authorize]
         [HttpDelete]
         public async Task<IActionResult> DeleteUser()
@@ -175,19 +190,64 @@ namespace RobotBokning.Controllers
 
             return NoContent();
         }
+
+        // Initiate password reset process
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model)
         {
             var user = await _userRepository.GetByEmailAsync(model.Email);
             if (user == null)
                 return Ok();
+
+            // Generate reset link and send email
             var token = await _userRepository.GeneratePasswordResetTokenAsync(user);
             var resetLink = $"{_configuration["AppSettings:ClientBaseUrl"]}/reset-password?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(model.Email)}";
             await _emailSender.SendEmailAsync(
                 user.Email,
                 "Återställ ditt lösenord",
-                $"<h2>Återställ ditt lösenord</h2><p>Klicka <a href='{resetLink}'>här</a> för att återställa ditt lösenord.</p>");
+                $"<h2>Återställ ditt lösenord</h2><p>Klicka <a href='{resetLink}'>här</a> för att återställa ditt lösenord.</p>" +
+                $"<p>Om du inte begärt att återställa ditt lösenord kan du bortse från detta mail.");
+
             return Ok();
+        }
+
+        // Reset password with token
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
+        {
+            var user = await _userRepository.GetByEmailAsync(model.Email);
+            if (user == null)
+                return BadRequest("Ogiltig återställningslänk");
+
+            var result = await _userRepository.ResetPasswordAsync(user, model.Token, model.NewPassword);
+            if (!result)
+                return BadRequest("Lösenordet måste innehålla minst en stor bokstav, en liten bokstav, en siffra och vara minst 6 tecken långt");
+
+            return Ok();
+        }
+
+        // Change password for logged-in user
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
+        {
+            var user = await _userRepository.GetByEmailAsync(User.FindFirstValue(ClaimTypes.Email));
+            if (user == null)
+                return NotFound("Användare hittades inte");
+
+            var isCurrentPasswordValid = await _userRepository.ValidatePasswordAsync(user, model.CurrentPassword);
+            if (!isCurrentPasswordValid)
+            {
+                return BadRequest("Fel nuvarande lösenord");
+            }
+
+            var result = await _userRepository.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            if (!result)
+            {
+                return BadRequest("Nya lösenordet måste innehålla minst en stor bokstav, en liten bokstav, en siffra och vara minst 6 tecken långt");
+            }
+
+            return Ok("Lösenordet har ändrats!");
         }
     }
 }

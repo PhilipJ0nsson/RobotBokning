@@ -8,11 +8,13 @@ using RobotBokning.Repositories;
 
 namespace RobotBokning.Controllers
 {
+    // Controller for managing robot-related documents, requires authentication
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class DocumentController : ControllerBase
     {
+        // Dependencies for document management
         private readonly IDocumentRepository _documentRepository;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IMapper _mapper;
@@ -30,24 +32,27 @@ namespace RobotBokning.Controllers
             _logger = logger;
         }
 
+        // Upload document for a specific robot (admin only)
         [HttpPost("robot/{robotId}")]
         public async Task<IActionResult> UploadDocument(int robotId, [FromForm] DocumentUploadDto dto)
         {
             try
             {
+                // Check admin permission
                 if (!User.IsInRole("Admin"))
                     return Forbid();
 
+                // Validate file
                 if (dto.File == null || dto.File.Length == 0)
-                    return BadRequest("No file uploaded");
+                    return BadRequest("Ingen fil har laddats upp");
 
-                // Säkerställ att WebRootPath finns
+                // Ensure wwwroot path exists
                 if (string.IsNullOrEmpty(_webHostEnvironment.WebRootPath))
                 {
                     _webHostEnvironment.WebRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
                 }
 
-                // Validera och skapa filtyps-mapp
+                // Determine folder based on file type
                 string uploadsFolder;
                 switch (dto.Type.ToLower())
                 {
@@ -61,24 +66,24 @@ namespace RobotBokning.Controllers
                         uploadsFolder = "text";
                         break;
                     default:
-                        return BadRequest("Invalid file type");
+                        return BadRequest("Ogiltig filtyp");
                 }
 
-                // Skapa mappar om de inte finns
+                // Create upload directory
                 var fullUploadsPath = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", uploadsFolder);
                 Directory.CreateDirectory(fullUploadsPath);
 
-                // Skapa unikt filnamn
+                // Generate unique filename
                 var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(dto.File.FileName)}";
                 var filePath = Path.Combine(fullUploadsPath, fileName);
 
-                // Spara filen
+                // Save file to disk
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await dto.File.CopyToAsync(stream);
                 }
 
-                // Skapa dokument i databasen
+                // Create database record
                 var document = new Document
                 {
                     Title = dto.Title,
@@ -95,9 +100,11 @@ namespace RobotBokning.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error uploading document");
-                return StatusCode(500, "Internal server error while uploading document");
+                return StatusCode(500, "Ett internt fel uppstod vid uppladdning av dokumentet");
             }
         }
+
+        // Delete document (admin only)
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDocument(int id)
         {
@@ -106,16 +113,16 @@ namespace RobotBokning.Controllers
 
             var document = await _documentRepository.GetByIdAsync(id);
             if (document == null)
-                return NotFound();
+                return NotFound("Dokumentet hittades inte");
 
-            // Ta bort filen från filsystemet
+            // Remove physical file
             var filePath = Path.Combine(_webHostEnvironment.WebRootPath, document.FilePath.TrimStart('/'));
             if (System.IO.File.Exists(filePath))
             {
                 System.IO.File.Delete(filePath);
             }
 
-            // Ta bort från databasen
+            // Remove database record
             await _documentRepository.DeleteAsync(document);
             return NoContent();
         }
