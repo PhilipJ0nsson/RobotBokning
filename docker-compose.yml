@@ -1,0 +1,49 @@
+version: '3.8'
+services:
+  db:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    environment:
+      - ACCEPT_EULA=1
+      - MSSQL_SA_PASSWORD=YourStrong!Passw0rd
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./RobotBokning
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5069
+      - ConnectionStrings__DefaultConnection=Server=db;Database=YourDatabase;User=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True
+    ports:
+      - "5069:5069"
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./UI
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./UI:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:5069
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  sqldata:

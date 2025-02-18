@@ -197,7 +197,7 @@ namespace RobotBokning
 
             var app = builder.Build();
 
-            // Kör databasmigrering före app.Run()
+            // Kï¿½r databasmigrering fï¿½re app.Run()
             await MigrateDatabase(app);
 
             if (app.Environment.IsDevelopment())
@@ -221,8 +221,9 @@ namespace RobotBokning
 
             app.MapControllers();
 
-            // Kör seed efter migrering men före app.Run()
+            // Kï¿½r seed efter migrering men fï¿½re app.Run()
             await SeedAdmin(app);
+            await SeedRobot(app);
 
             app.Run();
         }
@@ -286,6 +287,43 @@ namespace RobotBokning
                 }
             }
         }
+        private static async Task SeedRobot(WebApplication app)
+        {
+            using (var scope = app.Services.CreateScope())
+            {
+                try
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+                    logger.LogInformation("Starting robot seeding...");
+
+                    if (!context.Robots.Any(r => r.Name == "Mobile Aloha"))
+                    {
+                        var mobileAloha = new Robot
+                        {
+                            Name = "Mobile Aloha",
+                            Description = "A versatile mobile robot platform for research and development",
+                            IsAvailable = true,
+                        };
+
+                        context.Robots.Add(mobileAloha);
+                        await context.SaveChangesAsync();
+                        logger.LogInformation("Mobile Aloha robot created successfully");
+                    }
+                    else
+                    {
+                        logger.LogInformation("Mobile Aloha robot already exists");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "An error occurred while seeding the robot");
+                    throw;
+                }
+            }
+        }
     }
 }
 
@@ -331,13 +369,13 @@ namespace RobotBokning
 //                options.MaxRequestBodySize = 30 * 1024 * 1024; // 30 MB
 //            });
 
-//            // Och för Kestrel
+//            // Och fï¿½r Kestrel
 //            builder.Services.Configure<KestrelServerOptions>(options =>
 //            {
 //                options.Limits.MaxRequestBodySize = 30 * 1024 * 1024; // 30 MB
 //            });
 
-//            // För form/multipart hantering
+//            // Fï¿½r form/multipart hantering
 //            builder.Services.Configure<FormOptions>(options =>
 //            {
 //                options.MultipartBodyLengthLimit = 30 * 1024 * 1024; // 30 MB
@@ -470,7 +508,7 @@ namespace RobotBokning
 //                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 //                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-//                // Skapa både Admin och User roller
+//                // Skapa bï¿½de Admin och User roller
 //                string[] roles = { "Admin", "User" };
 //                foreach (var role in roles)
 //                {
@@ -496,7 +534,7 @@ namespace RobotBokning
 //                        IsActive = true
 //                    };
 
-//                    var result = await userManager.CreateAsync(admin, "Password!1"); // Ändra lösenord!
+//                    var result = await userManager.CreateAsync(admin, "Password!1"); // ï¿½ndra lï¿½senord!
 //                    if (result.Succeeded)
 //                    {
 //                        await userManager.AddToRoleAsync(admin, "Admin");
