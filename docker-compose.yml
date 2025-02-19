@@ -4,7 +4,7 @@ services:
     image: mcr.microsoft.com/azure-sql-edge:latest
     environment:
       - ACCEPT_EULA=1
-      - MSSQL_SA_PASSWORD=YourStrong!Passw0rd
+      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD}
     ports:
       - "1433:1433"
     volumes:
@@ -18,8 +18,8 @@ services:
       dockerfile: Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Server=db;Database=RobotBokning;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True
-      - JWT__SecretKey=superSafeAndSecureKeyThatIsVeryVeryVeryVeryLongAndSecure123456789ABCDEFGHIJKLMNOPQRSTUVWXYZandlittlesafer123
+      - ConnectionStrings__DefaultConnection=Server=db;Database=RobotBokning;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      - JWT__SecretKey=${JWT_SECRET_KEY}
     ports:
       - "5001:8080"
     depends_on:
