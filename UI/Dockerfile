@@ -1,18 +1,15 @@
-# ./UI/Dockerfile
-FROM node:20-alpine
-
+FROM node:20-alpine AS build
 WORKDIR /app
 
-# Copy package files first
+# Copy package files
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy the rest of the application
+# Copy source and build
 COPY . .
+RUN npm run build
 
-EXPOSE 5173
-
-# Start development server with proper host binding
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# Serve with nginx
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf

@@ -17,11 +17,11 @@ services:
       context: ./RobotBokning
       dockerfile: Dockerfile
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:5069
-      - ConnectionStrings__DefaultConnection=Server=db;Database=YourDatabase;User=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=db;Database=RobotBokning;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True
+      - JWT__SecretKey=superSafeAndSecureKeyThatIsVeryVeryVeryVeryLongAndSecure123456789ABCDEFGHIJKLMNOPQRSTUVWXYZandlittlesafer123
     ports:
-      - "5069:5069"
+      - "5001:8080"
     depends_on:
       - db
     networks:
@@ -31,13 +31,12 @@ services:
     build:
       context: ./UI
       dockerfile: Dockerfile
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./UI:/app
-      - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:5069
+      - VITE_API_URL=/api
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
     networks:
       - app-network
 

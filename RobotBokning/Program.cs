@@ -121,7 +121,11 @@ namespace RobotBokning
                 options.AddPolicy("AllowViteApp",
                     builder => builder
                         .WithOrigins(
-                            "http://localhost:5173"
+                            "http://localhost:5173",
+                            "http://localhost",
+                            "http://frontend", // container name
+                            "http://frontend:4173",  // for container-to-container communication 4173 is Vite default prod port
+                            "http://localhost:4173"  // for host machine access
                         )
                         .AllowAnyMethod()
                         .AllowAnyHeader());
