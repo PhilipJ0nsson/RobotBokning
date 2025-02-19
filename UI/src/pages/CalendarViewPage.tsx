@@ -383,7 +383,7 @@ return (
                   Kontakt
                 </h3>
                 <p className="text-gray-800">Vid frågor kontakta support:</p>
-                <p className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">
+                <p className="text-sm font-medium text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">
                   mobilealohafalkenberg@gmail.com
                 </p>
               </div>

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Base URL for API requests
-const API_URL = 'https://localhost:7285';
+const isDevelopment = import.meta.env.MODE === 'development';
+const API_URL = isDevelopment ? 'http://localhost:5069' : '';
 
 // Create axios instance with default settings
 const instance = axios.create({
