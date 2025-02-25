@@ -1,7 +1,6 @@
 import axios from 'axios';
-
-const isDevelopment = import.meta.env.MODE === 'development';
-const API_URL = isDevelopment ? 'http://localhost:5069' : '';
+// Håll en konsekvent baseURL i alla miljöer
+const API_URL = '/api';
 
 // Create axios instance with default settings
 const instance = axios.create({

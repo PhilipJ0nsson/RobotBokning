@@ -150,35 +150,6 @@ namespace RobotBokning.Controllers
                 return BadRequest($"Ett fel uppstod: {ex.Message}");
             }
         }
-        //[HttpGet("current-holder/{robotId}")]
-        //public async Task<ActionResult<CurrentHolderDto>> GetCurrentHolder(int robotId, [FromQuery] DateTime date)
-        //{
-        //    try
-        //    {
-        //        var latestBooking = await _bookingRepository.GetLatestBookingForRobotAsync(robotId, date);
-
-        //        if (latestBooking == null ||
-        //            date < latestBooking.StartTime ||
-        //            date > latestBooking.EndTime)
-        //        {
-        //            return Ok(null);
-        //        }
-
-        //        var user = latestBooking.User;
-        //        if (user == null)
-        //        {
-        //            return NotFound("Ingen användare är associerad med bokningen.");
-        //        }
-
-        //        var result = _mapper.Map<CurrentHolderDto>(latestBooking);
-        //        return Ok(result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Misslyckades att hämta nuvarande innehavare.");
-        //        return BadRequest($"Ett fel uppstod: {ex.Message}");
-        //    }
-        //}
 
         // Delete booking
         [HttpDelete("{id}")]

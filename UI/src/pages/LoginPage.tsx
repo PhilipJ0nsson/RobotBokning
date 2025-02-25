@@ -15,7 +15,7 @@ export default function LoginPage() {
     firstName: '',
     lastName: '',
     company: '',
-    phoneNumber: '',
+    phone: '',
   });
 
   // Password reset functionality states
@@ -147,7 +147,7 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
       firstName: '',
       lastName: '',
       company: '',
-      phoneNumber: '',
+      phone: '',
     });
     setPasswordValidation({
       length: false,
@@ -289,16 +289,16 @@ return (
                 {/* Contact and company fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                       Telefonnummer
                     </label>
                     <input
-                      id="phoneNumber"
-                      name="phoneNumber"
+                      id="phone"
+                      name="phone"
                       type="tel"
                       required
                       className="mt-1 block w-full rounded-lg border border-violet-200 bg-white/70 backdrop-blur-sm px-3 py-2 text-gray-900 focus:border-violet-500 focus:ring-violet-500 focus:ring-1 focus:outline-none"
-                      value={formData.phoneNumber}
+                      value={formData.phone}
                       onChange={handleChange}
                     />
                   </div>

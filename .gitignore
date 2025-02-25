@@ -367,4 +367,7 @@ RobotBokning/appsettings.Development.json
 # Docker
 .env
 *.env
+.env.*
+!.env.example
+
 docker-compose.override.yml

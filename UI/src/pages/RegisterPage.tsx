@@ -22,7 +22,7 @@ export default function RegisterPage() {
     firstName: '',
     lastName: '',
     company: '',
-    phoneNumber: '',
+    phone: '',
     role: 'User'
   });
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -129,7 +129,7 @@ export default function RegisterPage() {
         firstName: '',
         lastName: '',
         company: '',
-        phoneNumber: '',
+        phone: '',
         role: 'User'
       });
       setConfirmPassword('');
@@ -215,15 +215,15 @@ export default function RegisterPage() {
               {/* Contact information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                     Telefonnummer
                   </label>
                   <input
                     type="tel"
-                    name="phoneNumber"
-                    id="phoneNumber"
+                    name="phone"
+                    id="phone"
                     required
-                    value={formData.phoneNumber}
+                    value={formData.phone}
                     onChange={handleChange}
                     className="mt-1 block w-full rounded-lg border border-violet-200 bg-white/70 backdrop-blur-sm px-3 py-2 text-gray-900 focus:border-violet-500 focus:ring-violet-500 focus:ring-1 focus:outline-none"
                   />
