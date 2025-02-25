@@ -121,7 +121,11 @@ namespace RobotBokning
                 options.AddPolicy("AllowViteApp",
                     builder => builder
                         .WithOrigins(
-                            "http://localhost:5173"
+                            "http://localhost:5173",
+                            "http://localhost",
+                            "http://frontend", // container name
+                            "http://frontend:4173",  // for container-to-container communication 4173 is Vite default prod port
+                            "http://localhost:4173"  // for host machine access
                         )
                         .AllowAnyMethod()
                         .AllowAnyHeader());
@@ -197,7 +201,7 @@ namespace RobotBokning
 
             var app = builder.Build();
 
-            // Kör databasmigrering före app.Run()
+            // Kï¿½r databasmigrering fï¿½re app.Run()
             await MigrateDatabase(app);
 
             if (app.Environment.IsDevelopment())
@@ -221,7 +225,7 @@ namespace RobotBokning
 
             app.MapControllers();
 
-            // Kör seed efter migrering men före app.Run()
+            // Kï¿½r seed efter migrering men fï¿½re app.Run()
             await SeedAdmin(app);
             await SeedRobot(app);
 

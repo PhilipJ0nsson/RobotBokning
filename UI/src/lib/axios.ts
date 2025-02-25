@@ -1,5 +1,4 @@
 import axios from 'axios';
-
 // Håll en konsekvent baseURL i alla miljöer
 const API_URL = '/api';
 
