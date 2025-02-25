@@ -1,0 +1,71 @@
+version: '3.8'
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: robotbokning-sql
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${DB_PASSWORD}
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql-data:/var/opt/mssql
+    networks:
+      - robotbokning-network
+    restart: unless-stopped
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "${DB_PASSWORD}" -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
+  api:
+    build:
+      context: ./RobotBokning
+      dockerfile: Dockerfile
+    container_name: robotbokning-api
+    depends_on:
+      - db
+      # db:
+      #   condition: service_healthy
+    ports:
+      - "5000:80"
+      - "5001:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=db;Database=RobotBokningDB;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True;
+      - JWT__SecretKey=${JWT_SECRET_KEY}
+      - Email__Username=${EMAIL_USERNAME}
+      - Email__Password=${EMAIL_PASSWORD}
+      - Email__From=${EMAIL_FROM}
+      - AppSettings__ClientBaseUrl=http://localhost
+    volumes:
+      - api-uploads:/app/wwwroot/uploads
+    networks:
+      - robotbokning-network
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./UI
+      dockerfile: Dockerfile
+    container_name: robotbokning-web
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    environment:
+      - VITE_API_URL=/api
+    networks:
+      - robotbokning-network
+    restart: unless-stopped
+
+volumes:
+    sql-data:
+    api-uploads:
+
+networks:
+    robotbokning-network:
+      driver: bridge

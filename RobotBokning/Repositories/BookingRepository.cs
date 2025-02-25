@@ -60,50 +60,19 @@ namespace RobotBokning.Repositories
         }
         public async Task<Booking> GetLatestBookingForRobotAsync(int robotId)
         {
+            var date = DateTime.Now; // Use current date/time
+
             return await _context.Bookings
                 .Include(b => b.User)
                 .Where(b => b.RobotId == robotId &&
-                           b.Status != BookingStatus.Cancelled)
-                .OrderByDescending(b => b.EndTime)
+                           b.Status != BookingStatus.Cancelled &&
+                           ((b.StartTime <= date && b.EndTime >= date) || // Current active booking
+                            b.EndTime < date)) // Or past booking
+                .OrderByDescending(b =>
+                    b.StartTime <= date && b.EndTime >= date ? DateTime.MaxValue : b.EndTime) // Prioritize active bookings
                 .FirstOrDefaultAsync();
         }
-        //public async Task<Booking> GetLatestBookingForRobotAsync(int robotId, DateTime date)
-        //{
-        //    // First, try to find an active booking for the current date
-        //    var activeBooking = await _context.Bookings
-        //        .Include(b => b.User)
-        //        .Where(b => b.RobotId == robotId &&
-        //                   b.StartTime <= date &&
-        //                   b.EndTime >= date)
-        //        .OrderByDescending(b => b.EndTime)
-        //        .FirstOrDefaultAsync();
 
-        //    if (activeBooking != null)
-        //    {
-        //        return activeBooking;
-        //    }
-
-        //    // If no active booking exists, find the most recent completed booking
-        //    var lastCompletedBooking = await _context.Bookings
-        //        .Include(b => b.User)
-        //        .Where(b => b.RobotId == robotId &&
-        //                   b.EndTime < date &&
-        //                   b.Status != BookingStatus.Cancelled)  // Exclude cancelled bookings
-        //        .OrderByDescending(b => b.EndTime)
-        //        .FirstOrDefaultAsync();
-
-        //    if (lastCompletedBooking != null)
-        //    {
-        //        return lastCompletedBooking;
-        //    }
-
-        //    // If no active or completed bookings exist, find the most recent manual holder change
-        //    return await _context.Bookings
-        //        .Include(b => b.User)
-        //        .Where(b => b.RobotId == robotId)
-        //        .OrderByDescending(b => b.EndTime)
-        //        .FirstOrDefaultAsync();
-        //}
         public async Task<Booking> GetNextBookingForRobotAsync(int robotId, DateTime currentDate)
         {
             // Hämta alla bokningar för roboten som är framtida

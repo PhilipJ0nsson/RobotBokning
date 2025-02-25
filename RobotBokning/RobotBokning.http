@@ -1,6 +1,0 @@
-@RobotBokning_HostAddress = http://localhost:5069
-
-GET {{RobotBokning_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

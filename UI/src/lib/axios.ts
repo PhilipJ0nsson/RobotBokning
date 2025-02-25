@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Base URL for API requests
-const API_URL = 'https://localhost:7285';
+// Håll en konsekvent baseURL i alla miljöer
+const API_URL = '/api';
 
 // Create axios instance with default settings
 const instance = axios.create({
