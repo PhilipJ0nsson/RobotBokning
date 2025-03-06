@@ -40,7 +40,7 @@ services:
       - Email__Username=${EMAIL_USERNAME}
       - Email__Password=${EMAIL_PASSWORD}
       - Email__From=${EMAIL_FROM}
-      - AppSettings__ClientBaseUrl=http://localhost
+      - AppSettings__ClientBaseUrl=${CLIENT_BASE_URL}
     volumes:
       - api-uploads:/app/wwwroot/uploads
     networks:
