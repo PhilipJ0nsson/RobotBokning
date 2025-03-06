@@ -254,6 +254,15 @@ namespace RobotBokning
                         }
                     }
 
+
+                    var adminUsers = await userManager.GetUsersInRoleAsync("Admin");
+                    if (adminUsers.Any())
+                    {
+                        logger.LogInformation("Admin user(s) already exist. Skipping admin seeding.");
+                        return;
+                    }
+
+
                     var adminEmail = "admin@example.com";
                     var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
