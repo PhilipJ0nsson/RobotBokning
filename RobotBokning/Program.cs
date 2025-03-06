@@ -244,6 +244,7 @@ namespace RobotBokning
 
                     logger.LogInformation("Starting admin seeding...");
 
+                    // Skapa roller om de inte finns
                     string[] roles = { "Admin", "User" };
                     foreach (var role in roles)
                     {
@@ -254,57 +255,77 @@ namespace RobotBokning
                         }
                     }
 
+                    // Mer tillförlitlig kontroll - hämta alla användare och kolla deras roller
+                    bool adminExists = false;
+                    var allUsers = userManager.Users.ToList();
 
-                    var adminEmail = "admin@example.com";
-                    var adminUser = await userManager.FindByEmailAsync(adminEmail);
-                    if (adminUser != null)
+                    logger.LogInformation($"Found {allUsers.Count} total users in database");
+
+                    foreach (var user in allUsers)
                     {
-                        logger.LogInformation($"Admin user with email {adminEmail} already exists. Skipping admin creation.");
-                        
-                        // Se till att användaren har Admin-rollen (för säkerhets skull)
-                        if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+                        if (await userManager.IsInRoleAsync(user, "Admin"))
                         {
-                            await userManager.AddToRoleAsync(adminUser, "Admin");
-                            logger.LogInformation("Added missing Admin role to existing admin user");
+                            adminExists = true;
+                            logger.LogInformation($"Found existing admin user: {user.Email}");
+                            break;
                         }
-                        
+                    }
+
+                    if (adminExists)
+                    {
+                        logger.LogInformation("Admin user(s) already exist. Skipping admin seeding.");
                         return;
                     }
 
-
+                    // Om ingen admin finns, skapa en
+                    logger.LogInformation("No admin users found. Creating default admin...");
                     var adminEmail = "admin@example.com";
-                    var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
-                    if (adminUser == null)
+                    var admin = new ApplicationUser
                     {
-                        var admin = new ApplicationUser
-                        {
-                            UserName = adminEmail,
-                            Email = adminEmail,
-                            FirstName = "Admin",
-                            LastName = "User",
-                            EmailConfirmed = true,
-                            Created = DateTime.Now,
-                            IsActive = true
-                        };
+                        UserName = adminEmail,
+                        Email = adminEmail,
+                        FirstName = "Admin",
+                        LastName = "User",
+                        Company = "Admin Company", // Sätt detta enligt behov
+                        Phone = "0000000000",      // Sätt detta enligt behov
+                        EmailConfirmed = true,
+                        Created = DateTime.Now,
+                        IsActive = true,
+                        Bookings = new List<Booking>() // Initiera för att undvika null-referens
+                    };
 
-                        var result = await userManager.CreateAsync(admin, "Password!1");
-                        if (result.Succeeded)
+                    var result = await userManager.CreateAsync(admin, "Password!1");
+                    if (result.Succeeded)
+                    {
+                        var roleResult = await userManager.AddToRoleAsync(admin, "Admin");
+                        if (roleResult.Succeeded)
                         {
-                            await userManager.AddToRoleAsync(admin, "Admin");
-                            logger.LogInformation("Admin user created successfully");
+                            logger.LogInformation("Admin user created and role assigned successfully");
                         }
                         else
                         {
-                            logger.LogError("Failed to create admin user: {Errors}",
-                                string.Join(", ", result.Errors.Select(e => e.Description)));
+                            logger.LogError("Failed to assign Admin role: {Errors}",
+                                string.Join(", ", roleResult.Errors.Select(e => e.Description)));
                         }
+                    }
+                    else
+                    {
+                        logger.LogError("Failed to create admin user: {Errors}",
+                            string.Join(", ", result.Errors.Select(e => e.Description)));
                     }
                 }
                 catch (Exception ex)
                 {
                     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
                     logger.LogError(ex, "An error occurred while seeding the admin user");
+
+                    // Logga också inner exception om den finns
+                    if (ex.InnerException != null)
+                    {
+                        logger.LogError("Inner exception: {Message}", ex.InnerException.Message);
+                    }
+
                     throw;
                 }
             }
