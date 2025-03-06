@@ -255,10 +255,19 @@ namespace RobotBokning
                     }
 
 
-                    var adminUsers = await userManager.GetUsersInRoleAsync("Admin");
-                    if (adminUsers.Any())
+                    var adminEmail = "admin@example.com";
+                    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+                    if (adminUser != null)
                     {
-                        logger.LogInformation("Admin user(s) already exist. Skipping admin seeding.");
+                        logger.LogInformation($"Admin user with email {adminEmail} already exists. Skipping admin creation.");
+                        
+                        // Se till att användaren har Admin-rollen (för säkerhets skull)
+                        if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+                        {
+                            await userManager.AddToRoleAsync(adminUser, "Admin");
+                            logger.LogInformation("Added missing Admin role to existing admin user");
+                        }
+                        
                         return;
                     }
 
