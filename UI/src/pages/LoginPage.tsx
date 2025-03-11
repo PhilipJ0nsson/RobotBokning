@@ -52,7 +52,7 @@ export default function LoginPage() {
 
 // List of authorized domains that are allowed to register
 const ALLOWED_DOMAINS = [
-  'ibc-ingernational.se',
+  'ibc-international.se',
   'ledel.se',
   'vinbergsmek.se',
   'randek.com',
